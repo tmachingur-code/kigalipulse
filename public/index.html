@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <meta name="description" content="KigaliPulse provides weather forecasts and air-quality intelligence for smarter daily decisions.">
+
+        <title>KigaliPulse | Weather & Air  Quality</title>
+
+        <link rel="stylesheet" href="/css/style.css">
+    </head>
+
+    <body>
+
+        <!-- Main application container-->
+        <div class="app-container">
+            <!--Header-->
+            <header class="header">
+                <div class="brand">
+                    <h1>KigaliPulse<span>.</span></h1>
+                    <p>Weather & Environmental Intelligence</p>
+                </div>
+
+                <div class="header-status" id="connection-status">
+                    <span class="status-indicator" id="connection-indicator"></span>
+                    <span id="connection-label">Checking connection...</span>
+                </div>
+            </header>
+
+            <!-- City search-->
+            <section class="search-section">
+                <div>
+                    <h2>Explore Your Environment</h2>
+                    <p>Get weather and air-quality insights for any city.</p>
+                </div>
+
+                <form id="search-form" class="search-form">
+                    <input 
+                       type="text"
+                       id="city-input"
+                       placeholder="Search a city..."
+                       autocomplete="off"
+                       required 
+                    >
+
+                    <button type="submit" id="search-button">
+                        Search
+                    </button>
+                </form>
+
+                <div id="search-results" class="search-results"></div>
+            </section>
+
+            <!-- Location information-->
+            <section class="location-section">
+                <div>
+                    <h2 id="location-name">Loading location...</h2>
+                    <p id="location-details">Fetching location information</p>
+                </div>
+
+                <p id="last-updated">Last updated: --</p>
+            </section>
+
+            <!-- Current weather-->
+            <section class="weather-section">
+                <h2>Current Weather</h2>
+
+                <div class="weather-card" id="current-weather">
+                    <p>Loading weather information...</p>
+                </div>
+            </section>
+
+            <!-- Air Quality-->
+            <section class="air-quality-section">
+                <h2>Air Quality Intelligence</h2>
+
+                <div id="air-quality-card" class="air-quality-card">
+                    <p>Loading air-quality information...</p>
+                </div>
+            </section>
+
+            <!-- Seven-day forecast-->
+            <section class="forecast-section">
+                <h2>7-Day Weather Forecast</h2>
+
+                <div id="forecast-container" class="forecast-container">
+                    <p>Loading forecast...</p>
+                </div>
+            </section>
+
+            <!-- Hourly forecast-->
+            <section class="hourly-section">
+                <div class="section-heading">
+                    <h2>Hourly Forecast</h2>
+
+                    <select id="hourly-sort">
+                        <option value="time">Sort by time</option>
+                        <option value="temperature">Sort by temperature</option>
+                        <option value="precipitation">Sort by precipitation</option>
+                    </select>
+                </div>
+
+                <div id="hourly-container" class="hourly-cotainer">
+                    <p>Loading hourly forecast...</p>
+                </div>
+            </section>
+
+            <!-- Weather visualization-->
+            <section class="visualization-section">
+                <h2>Weather Trends</h2>
+
+                <select id="chart-metric">
+                    <option value="temperature_2m">Temperature</option>
+                    <option value="precipitation_probability">Rain probability</option>
+                    <option value="relative_humidity_2m">Humidity</option>
+                    <option value="wind_speed_10m">Wind speed</option>
+                </select>
+
+                <div class="chart-container">
+                    <canvas id="weather-chart"></canvas>
+                </div>
+            </section>
+
+            <!-- Environmental insights-->
+            <section class="insights-section">
+                <h2>Smart Environmental Insights</h2>
+
+                <div id="insights-container">
+                    <p>Preparing environmental insights...</p>
+                </div>
+            </section>
+
+            <!-- Footer-->
+            <footer class="footer">
+                <p>
+                    KigaliPulse &copy; 2026
+                    Powered by 
+                    <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">
+                        Open-Meteo
+                    </a>
+                </p>
+
+                <p id="server-status">Checking server connection...</p>
+            </footer>
+        </div>
+
+        <script src="/js/app.js"></script>
+    </body>
+</html>

@@ -1,0 +1,43 @@
+{
+  "name": "kigalipulse",
+  "version": "1.0.0",
+  "description": "Smart Weather and Air Quality Intelligence for Kigali and beyond",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test",
+    "check": "node --check src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tmachingur-code/kigalipulse.git"
+  },
+  "keywords": [
+    "weather-api",
+    "air-quality",
+    "environmental-monitoring",
+    "nodejs",
+    "express",
+    "devops",
+    "open-meteo",
+    "load-balancing"
+  ],
+  
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/tmachingur-code/kigalipulse/issues"
+  },
+  "homepage": "https://github.com/tmachingur-code/kigalipulse#readme",
+  
+  "dependencies": {
+    "compression": "^1.8.2",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.5",
+    "helmet": "^8.3.0",
+    "node-cache": "^5.1.2"
+  }
+}
