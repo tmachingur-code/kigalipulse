@@ -75,12 +75,26 @@ test("GET /api/unknown returns HTTP 404", async () => {
     assert.equal(data.status, "error");
 });
 
-test("GET /api/connection returns a valid connectivity response", async () => {
-    const response = await fetch(`${baseUrl}/api/connection`);
-    const data = await response.json();
+test("GET /api/connection returns online when API is  reachable", async (t) => {
+    t.mock.method(globalThis, "fetch", async () => ({
+        ok: true,
+    }));
 
-    assert.ok([200, 503].includes(response.status));
-    assert.ok(["online", "offline"].includes(data.status));
+    const response = await request("/api/connection");
+
+    assert.equal(response.status, 200);
+    assert.equal(response.data.status, "online");
+});
+
+test("GET /api/connection returns offline when API fails", async (t) => {
+    t.mock.method(globalThis, "fetch", async () => {
+        throw new Error("Network unavailable");
+    });
+
+    const response = await request("/api/connection");
+
+    assert.equal(response.status, 503);
+    assert.equal(response.data.status, "offline");
 });
 
 test("GET /api/city successfully searched for a city", async (t) => {
@@ -169,6 +183,71 @@ test("GET /api/air-quality successfully returns air-quality data", async (t) =>{
     assert.equal(response.status, 200);
     assert.equal(data.status, "success");
     assert.equal(data.data.current.us_aqi, 35);
+});
+
+test("GET /api/weather with invalid longitude returns HTTP 400", async () => {
+    const response = await request(
+        "/api/weather?latitude=-1.9&longitude=200"
+    );
+
+    assert.equal(response.status,400);
+    assert.equal(response.data.status, "error");
+});
+
+test("GET /api/city with one-character name returns HTTP 400", async () => {
+    const response = await request("/api/city?name=K");
+
+    assert.equal(response.status, 400);
+    assert.equal(response.data.status, "error");
+});
+
+test("Weather API failure returns HTTP 502", async (t) => {
+    t.mock.method(globalThis, "fetch", async () => ({
+        ok: false,
+        status: 503
+    }));
+
+    const response = await request(
+        "/api/weather?latitude=10.123&longitude=35.456"
+    );
+
+    assert.equal(response.status, 502);
+    assert.equal(response.data.status, "error");
+});
+
+test("Weather API timeout returns HTTP 504", async (t) => {
+    t.mock.method(globalThis, "fetch", async () => {
+        const error = new  Error("Request timed out");
+        error.name = "TimeoutError";
+        throw error;
+    });
+
+    const response = await request(
+        "/api/weather?latitude=11.123&longitude=36.456"
+    );
+
+    assert.equal(response.status, 504);
+    assert.equal(response.data.status, "error");
+});
+
+test("Repeated city search searches use cached data", async (t) => {
+    let calls = 0;
+
+    t.mock.method(globalThis, "fetch", async () => {
+        calls++;
+
+        return {
+            ok: true,
+            json: async () => ({
+                results: [{ name: "Cacheville"}]
+            })
+        };
+    });
+
+    await request("/api/city?name=Cacheville");
+    await request("/api/city?name=Cacheville");
+
+    assert.equal(calls, 1);
 });
 
 test("Close test server", async () =>{
