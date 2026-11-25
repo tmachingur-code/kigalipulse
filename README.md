@@ -4,25 +4,34 @@
 
 KigaliPulse is a web-based weather and air quality intelligence platform designed to help users make informed daily decisions using weather forecasts and air quality information.
 
-The application retrieves real-time weather and air quality information from Open-Meteo APIs and presents it through an interactive dashboard.
+The application retrieves weather and air quality information from external APIs and presents it through an interactive dashboard.
+
+KigaliPulse also provides location search functionality for Kigali neighbourhoods and administrative areas through the Ahantu API. For international locations, the application uses Open-Meteo Geocoding as a fallback.
+
+The platform is deployed using a multi-tier architecture with two application servers behind an HAProxy load balancer to support traffic distribution and application availability.
 
 ## 2. Technologies Used
 
-- **Frontend:** HTML, CSS, JavaScript
-- **Backend:** Node.js and Express.js
-- **External APIs:** Open-Meteo Weather API, Air Quality API and Geocoding API
-- **Caching:** NodeCache and browser localStorage
-- **Web server:** NGINX
-- **Load balancer:** HAProxy
-- **Process management:** systemd
-- **Deployment environment:** Ubuntu 20.04.6 LTS
-- **Version control:** Git and GitHub
+| Category | Technologies |
+|---|---|
+| Frontend | HTML, CSS, JavaScript |
+| Backend | Node.js, Express.js |
+| Weather API | Open-Meteo Weather Forecast API |
+| Air quality API | Open-Meteo Air Quality API |
+| Geocoding API | Open-Meteo Geocoding API |
+| Kigali location search | Ahantu API |
+| Caching | NodeCache, browser localStorage |
+| Web server | NGINX |
+| Load balancer | HAProxy |
+| Process management | systemd |
+| Operating system | Ubuntu 20.04.6 LTS |
+| Version control | Git and GitHub |
 
 ## 3. System Architecture
 
-The application uses a multi-tier architecture consisting of one load balancer and two application servers.
+KigaliPulse uses a multi-tier architecture consisting of one load balancer and two application servers.
 
-### Infrastructure
+### 3.1 Infrastructure
 
 | Server | Public IP | Responsibility |
 |---|---|---|
@@ -30,43 +39,194 @@ The application uses a multi-tier architecture consisting of one load balancer a
 | Web01 | 35.176.96.139 | KigaliPulse application |
 | Web02 | 35.176.161.100 | KigaliPulse application |
 
-### Request flow
+### 3.2 Request flow
 
-1. Users access `https://www.tsungie.tech`.
-2. HAProxy receives incoming HTTP/HTTPS requests.
+1. Users access the application through `https://www.tsungie.tech`.
+2. HAProxy receives incoming HTTP and HTTPS requests.
 3. HTTP requests are redirected to HTTPS.
-4. HAProxy distributes requests using the Round Robin algorithm.
-5. Requests are forwarded to Web01 or Web02.
-6. NGINX on the selected server forwards requests to the Node.js application on port 3000.
-7. Express processes requests and communicates with Open-Meteo APIs when required.
+4. HAProxy distributes incoming requests using the Round Robin algorithm.
+5. Requests are forwarded to either Web01 or Web02.
+6. NGINX on the selected server acts as a reverse proxy and forwards requests to the Node.js application running on port 3000.
+7. Express processes the requests and communicates with the relevant external APIs.
+8. The application returns the requested information to the user.
+
+### 3.3 Architecture diagram
+
+```text
+                  USERS
+                    |
+                    v
+           www.tsungie.tech
+                    |
+                    v
+             LB01 - HAProxy
+            HTTPS / Round Robin
+                    |
+              +-----+-----+
+              |           |
+              v           v
+            WEB01        WEB02
+            NGINX        NGINX
+              |           |
+              v           v
+          Node.js App  Node.js App
+           Port 3000    Port 3000
+              |           |
+              +-----+-----+
+                    |
+                    v
+              External APIs
+             /      |       \
+            /       |        \
+       Open-Meteo  Open-Meteo  Ahantu
+        Weather    Air Quality  API
+       Geocoding
+```
 
 ## 4. External API Integration
 
-KigaliPulse uses the following Open-Meteo services:
+KigaliPulse integrates Open-Meteo and Ahantu to provide weather, air quality and location information.
+
+### 4.1 Open-Meteo APIs
+
+Open-Meteo provides the weather, air quality and geocoding data used by the application.
 
 | API | Purpose |
 |---|---|
-| Weather Forecast API | Current weather and forecasts |
-| Air Quality API | Air quality and pollutant information |
-| Geocoding API | City search and geographic coordinates |
+| Weather Forecast API | Retrieves current weather and forecast information |
+| Air Quality API | Retrieves air quality and pollutant information |
+| Geocoding API | Searches for international locations and geographic coordinates |
 
-API documentation:
+Documentation:
 
-- https://open-meteo.com/en/docs
-- https://open-meteo.com/en/docs/air-quality-api
-- https://open-meteo.com/en/docs/geocoding-api
+- Weather API: https://open-meteo.com/en/docs
+- Air Quality API: https://open-meteo.com/en/docs/air-quality-api
+- Geocoding API: https://open-meteo.com/en/docs/geocoding-api
 
-API attribution: Weather and air quality data are provided by Open-Meteo. Refer to its documentation and applicable data licensing terms.
+### 4.2 Ahantu API
 
-## 5. Running Locally
+The Ahantu API provides location search functionality for Kigali neighbourhoods and administrative areas.
 
-### Prerequisites
+The integration retrieves location information including:
 
-- Node.js
+- Location name and address
+- Province and district
+- Sector, cell and village
+- Latitude and longitude
+- Location type and precision information
+
+The application filters search results to the City of Kigali to avoid returning similarly named locations outside Kigali.
+
+**Location search process:**
+
+1. The user enters a location in the search field.
+2. The backend sends a request to the Ahantu API.
+3. Results belonging to the City of Kigali are filtered and prioritised.
+4. If no matching Kigali locations are found, the application falls back to Open-Meteo Geocoding.
+5. The selected location's coordinates are used to retrieve weather and air quality information.
+
+Ahantu developer documentation: https://www.ahantu.rw/developers
+
+The Ahantu API key is stored in the server-side `.env` file and is not exposed in frontend code.
+
+## 5. Local Installation and Configuration
+
+### 5.1 Prerequisites
+
+Ensure that the following are installed:
+
+- Node.js 22 or a compatible version
 - npm
 - Git
 
-### Installation
+### 5.2 Clone the repository
+
+```bash
+git clone https://github.com/tmachingur-code/kigalipulse.git
+cd kigalipulse
+```
+
+### 5.3 Install dependencies
+
+```bash
+npm ci
+```
+
+### 5.4 Configure environment variables
+
+Create a local environment file:
+
+```bash
+cp .env.example .env
+```
+
+Configure the environment variables:
+
+```env
+PORT=3000
+HOST=0.0.0.0
+CACHE_TTL_SECONDS=600
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=120
+AHANTU_API_KEY=your_actual_api_key
+```
+
+Replace the placeholder with a valid Ahantu API key.
+
+Keep the actual key private. Never commit the `.env` file to GitHub.
+
+### 5.5 Run the application
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Open the application in your browser:
+
+`http://localhost:3000`
+
+### 5.6 Available commands
+
+| Command | Purpose |
+|---|---|
+| `npm start` | Starts the application |
+| `npm run dev` | Starts the development server |
+| `npm run check` | Checks server JavaScript syntax |
+| `npm test` | Runs automated tests |
+
+## 6. Application API Endpoints
+
+The backend exposes REST API endpoints for application functionality.
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/health` | GET | Checks application health |
+| `/api/connection` | GET | Checks external connectivity |
+| `/api/city?name=Kigali` | GET | Searches for a city using geocoding |
+| `/api/locations?q=Kimihurura` | GET | Searches Kigali locations using Ahantu |
+| `/api/weather` | GET | Retrieves weather information |
+| `/api/air-quality` | GET | Retrieves air quality information |
+
+The weather and air quality endpoints use the location coordinates required by the backend. Refer to the route implementation in `src/routes/api.routes.js` for the exact request parameters.
+
+## 7. Deployment Instructions
+
+KigaliPulse was deployed on two Ubuntu application servers behind an HAProxy load balancer.
+
+### 7.1 Application server setup
+
+The following steps were performed on Web01 and Web02.
+
+Install the required packages:
+
+```bash
+sudo apt update
+sudo apt install -y ca-certificates curl git
+```
+
+Install Node.js 22 and npm using the official NodeSource installation instructions.
 
 Clone the repository:
 
@@ -81,63 +241,18 @@ Install dependencies:
 npm ci
 ```
 
-Create the environment file:
+Configure the environment file:
 
 ```bash
-cp .env.example .env
+nano .env
 ```
 
-Start the application:
+Add the required environment variables, including the Ahantu API key.
+
+Secure the environment file:
 
 ```bash
-npm run dev
-```
-
-Open:
-
-`http://localhost:3000`
-
-### Available scripts
-
-| Command | Purpose |
-|---|---|
-| `npm start` | Start the application |
-| `npm run dev` | Start in development mode |
-| `npm run check` | Check server JavaScript syntax |
-| `npm test` | Run automated tests |
-
-## 6. Deployment Instructions
-
-The application was deployed on two Ubuntu application servers.
-
-### Web01 and Web02
-
-Install prerequisites:
-
-```bash
-sudo apt update
-sudo apt install -y ca-certificates curl git
-```
-
-Install Node.js 22 using the NodeSource setup instructions.
-
-Clone the application:
-
-```bash
-git clone https://github.com/tmachingur-code/kigalipulse.git
-cd kigalipulse
-```
-
-Install dependencies:
-
-```bash
-npm ci
-```
-
-Create environment configuration:
-
-```bash
-cp .env.example .env
+chmod 600 .env
 ```
 
 Validate the application:
@@ -146,9 +261,9 @@ Validate the application:
 npm run check
 ```
 
-### NGINX configuration
+### 7.2 NGINX reverse proxy configuration
 
-NGINX acts as a reverse proxy on both application servers.
+NGINX runs on both application servers and forwards incoming requests to the Node.js application on port 3000.
 
 Configuration file:
 
@@ -174,16 +289,16 @@ server {
 }
 ```
 
-Validate and reload:
+Validate and reload NGINX:
 
 ```bash
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-### systemd service
+### 7.3 systemd service configuration
 
-Both application servers use systemd to keep KigaliPulse running.
+Both application servers use systemd to manage the KigaliPulse application process.
 
 Service file:
 
@@ -207,7 +322,7 @@ RestartSec=5
 WantedBy=multi-user.target
 ```
 
-Enable and start:
+Enable and start the service:
 
 ```bash
 sudo systemctl daemon-reload
@@ -215,21 +330,21 @@ sudo systemctl enable kigalipulse
 sudo systemctl start kigalipulse
 ```
 
-Check service status:
+Check the service status:
 
 ```bash
 sudo systemctl status kigalipulse
 ```
 
-## 7. HAProxy Configuration
+### 7.4 HAProxy configuration
 
-HAProxy runs on Lb01 and distributes traffic between the two application servers.
+HAProxy runs on Lb01 and distributes incoming traffic between Web01 and Web02.
 
 Configuration file:
 
 `/etc/haproxy/haproxy.cfg`
 
-The backend uses Round Robin balancing and application-level health checks:
+The backend configuration uses Round Robin balancing and HTTP application-level health checks.
 
 ```haproxy
 backend web_servers
@@ -242,9 +357,9 @@ backend web_servers
         server web02 35.176.161.100:80 check inter 2s fall 2 rise 2
 ```
 
-The frontend listens on HTTP port 80 and HTTPS port 443. HTTP traffic is redirected to HTTPS.
+The HAProxy frontend listens on HTTP port 80 and HTTPS port 443. HTTP traffic is redirected to HTTPS.
 
-Validate configuration:
+Validate the HAProxy configuration:
 
 ```bash
 sudo haproxy -c -f /etc/haproxy/haproxy.cfg
@@ -256,15 +371,67 @@ Reload HAProxy:
 sudo systemctl reload haproxy
 ```
 
-Check service:
+Check its status:
 
 ```bash
 sudo systemctl status haproxy
 ```
 
+### 7.5 Updating an existing deployment
+
+To deploy future changes on each application server:
+
+```bash
+cd ~/kigalipulse
+git pull origin main
+npm ci
+sudo systemctl restart kigalipulse
+```
+
+Check that the application is running:
+
+```bash
+sudo systemctl status kigalipulse
+```
+
 ## 8. Testing and Verification
 
-The following deployment tests were performed.
+Automated and manual tests were performed to verify application functionality, external API integration and deployment infrastructure.
+
+### 8.1 Automated testing
+
+The automated test suite was executed using:
+
+```bash
+npm test
+```
+
+**Test results:**
+
+| Metric | Result |
+|---|---|
+| Total tests | 23 |
+| Passed | 23 |
+| Failed | 0 |
+
+The tests cover API functionality, Kigali location search, error handling and caching.
+
+### 8.2 Application functionality tests
+
+| Test | Expected result | Observed result |
+|---|---|---|
+| Kigali neighbourhood search | Relevant Kigali locations returned | Passed |
+| International location search | International locations returned | Passed |
+| Weather retrieval | Weather information displayed | Passed |
+| Air quality retrieval | Air quality information displayed | Passed |
+| Short search input | Search is not triggered unnecessarily | Passed |
+| Invalid location search | Appropriate response displayed | Passed |
+| Cached information | Previously cached data remains available | Passed |
+| Offline behaviour | Cached information remains available where previously stored | Passed |
+
+Manual searches were tested using Kimihurura, Remera, Nyamirambo, Kicukiro and Gikondo. International searches were also tested using London, Nairobi and Johannesburg.
+
+### 8.3 Deployment tests
 
 | Test | Expected result | Observed result |
 |---|---|---|
@@ -272,107 +439,178 @@ The following deployment tests were performed.
 | Web02 health endpoint | HTTP 200 | Passed |
 | NGINX reverse proxy | HTTP 200 | Passed |
 | HTTP to HTTPS redirect | HTTP 301 | Passed |
-| HTTPS domain access | HTTP 200 | Passed |
-| HAProxy configuration validation | Valid | Passed |
-| Round Robin distribution | Both servers receive traffic | Passed |
-| Application-level health checks | Detect unhealthy backend | Passed |
-| Failover test | Traffic continues through healthy server | Passed |
+| Public HTTPS access | HTTP 200 | Passed |
+| HAProxy configuration | Valid configuration | Passed |
+| Application-level health checks | Detect unhealthy application server | Passed |
+| Round Robin distribution | Traffic reaches both servers | Passed |
+| Failover | Traffic continues through healthy server | Passed |
+| Server recovery | Restored server rejoins backend pool | Passed |
 
-### Round Robin test
+### 8.4 Round Robin verification
 
-Ten requests were sent through HAProxy.
+Ten requests were sent through the public HAProxy endpoint.
+
+Observed results:
 
 - Web01 handled 5 requests.
 - Web02 handled 5 requests.
 
-### Failover test
+This confirmed that traffic was distributed between both application servers.
 
-The KigaliPulse systemd service was temporarily stopped on Web01.
+### 8.5 Failover verification
 
-HAProxy detected the failed application health check and directed all six subsequent test requests to Web02.
+The KigaliPulse systemd service was temporarily stopped on Web01 while NGINX remained running.
 
-All six requests returned HTTP 200.
+HAProxy detected the failed application-level health check and redirected traffic to Web02.
 
-Web01 was subsequently restored.
+Six subsequent requests were sent through the public endpoint:
 
-## 9. Production Access
+- Web02 handled all 6 requests.
+- All 6 requests were successful.
 
-Application URL:
+Web01 was subsequently restarted and restored.
 
-https://www.tsungie.tech
+A further ten requests confirmed that both servers had rejoined the backend pool:
 
-Health endpoint:
+- Web01 handled 5 requests.
+- Web02 handled 5 requests.
 
-https://www.tsungie.tech/api/health
+These tests demonstrated application-level health monitoring, failover and recovery.
 
-GitHub repository:
+## 9. Challenges Encountered and Solutions
 
-https://github.com/tmachingur-code/kigalipulse
+Several technical challenges were encountered during the development and deployment of KigaliPulse.
 
-## 10. Environment Configuration
-
-The application uses the following environment variables:
-
-| Variable | Default value | Purpose |
-|---|---|---|
-| PORT | 3000 | Application port |
-| HOST | 0.0.0.0 | Application host configuration |
-| CACHE_TTL_SECONDS | 600 | Cache duration |
-| RATE_LIMIT_WINDOW_MS | 900000 | Rate-limit window |
-| RATE_LIMIT_MAX_REQUESTS | 120 | Maximum requests per window |
-
-Do not commit actual `.env` files or credentials to GitHub.
-
-## 11. Project Repository
-
-Source code and future updates:
-
-https://github.com/tmachingur-code/kigalipulse
-
----
-
-**Project:** KigaliPulse – Smart Weather and Air Quality Intelligence Platform
-
-**Deployment architecture:** Two application servers behind an HAProxy load balancer.
-
-## 12. Challenges Encountered and Solutions
-
-During the development and deployment of KigaliPulse, several technical challenges were encountered.
-
-### 1. Node.js was not installed on the provided servers
+### 9.1 Node.js was not installed on the provided servers
 
 **Challenge:** Web01 and Web02 initially did not have Node.js or npm installed.
 
 **Solution:** Installed Node.js 22 and npm on both Ubuntu servers to provide the runtime environment required by the application.
 
-### 2. NGINX returned 502 Bad Gateway
+### 9.2 NGINX returned 502 Bad Gateway
 
-**Challenge:** After configuring NGINX as a reverse proxy, requests returned 502 errors when the Node.js application was not running.
+**Challenge:** NGINX returned 502 errors when the Node.js application was not running.
 
-**Solution:** Verified the application process and configured systemd to run KigaliPulse continuously in the background, with automatic restart capabilities.
+**Solution:** Verified the application process and configured systemd to manage the application continuously, including automatic restart capabilities.
 
-### 3. HAProxy did not initially detect application failure
+### 9.3 HAProxy did not initially detect application failure
 
 **Challenge:** During failover testing, HAProxy continued sending traffic to Web01 even when the Node.js application had stopped. NGINX was still running, so the original TCP health check considered the server available.
 
 **Solution:** Replaced basic TCP health checks with HTTP health checks against `/api/health`, requiring an HTTP 200 response. This allowed HAProxy to detect application-level failures and redirect traffic to Web02.
 
-### 4. Maintaining application availability
+### 9.4 Maintaining application availability
 
 **Challenge:** The application needed to remain available even when one application server became unavailable.
 
 **Solution:** Deployed identical application instances on Web01 and Web02 and configured HAProxy to distribute requests using Round Robin balancing, with health checks and failover.
 
-These improvements resulted in successful load distribution and failover tests.
+### 9.5 Integrating Kigali-specific location search
 
-## 13. Application Access
+**Challenge:** General geocoding services may return similarly named locations outside Kigali, making it difficult to provide relevant local search results.
 
-The KigaliPulse dashboard is publicly accessible through:
+**Solution:** Integrated the Ahantu API to search Kigali neighbourhoods and administrative areas. The backend filters results to the City of Kigali and uses Open-Meteo Geocoding as a fallback for international searches.
 
-https://www.tsungie.tech
+## 10. API Attribution and References
 
-No application login or password is currently required to access the dashboard.
+KigaliPulse uses external services and open-source technologies.
 
-The application uses publicly accessible Open-Meteo API endpoints, which do not require an API key for the endpoints used in this project.
+| Provider or technology | Usage | Documentation |
+|---|---|---|
+| Open-Meteo | Weather, air quality and geocoding data | https://open-meteo.com |
+| Ahantu | Kigali location search | https://www.ahantu.rw/developers |
+| Express.js | Backend web framework | https://expressjs.com |
+| Node.js | JavaScript runtime | https://nodejs.org |
+| NGINX | Reverse proxy | https://nginx.org |
+| HAProxy | Load balancing | https://www.haproxy.org |
+| Ubuntu | Server operating system | https://ubuntu.com |
 
-No SSH private keys, server passwords or other deployment secrets are included in this repository.
+Weather and air quality data are provided by Open-Meteo. Kigali location search is powered by Ahantu.
+
+Users should refer to the respective providers' documentation, attribution requirements and applicable usage terms.
+
+## 11. Environment Configuration and Security
+
+The application uses environment variables to manage configuration and external service credentials.
+
+| Variable | Default value | Purpose |
+|---|---|---|
+| PORT | 3000 | Application port |
+| HOST | 0.0.0.0 | Application host |
+| CACHE_TTL_SECONDS | 600 | Cache duration |
+| RATE_LIMIT_WINDOW_MS | 900000 | Rate-limit window |
+| RATE_LIMIT_MAX_REQUESTS | 120 | Maximum requests per window |
+| AHANTU_API_KEY | No default | Authentication for Ahantu location search |
+
+The `.env.example` file contains configuration placeholders for local setup.
+
+The actual `.env` file is excluded from version control.
+
+Security practices include:
+
+- Keeping API credentials on the backend.
+- Excluding `.env` files from Git commits.
+- Restricting access to server environment files using file permissions.
+- Using HTTPS for public application access.
+- Applying HTTP security headers through the backend security middleware.
+
+## 12. Project Structure
+
+The main project structure is organised as follows:
+
+```text
+kigalipulse/
+│
+├── public/
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   └── app.js
+│   └── index.html
+│
+├── src/
+│   ├── middleware/
+│   │   └── errorHandler.js
+│   ├── routes/
+│   │   └── api.routes.js
+│   ├── services/
+│   │   ├── cache.service.js
+│   │   ├── openMeteo.service.js
+│   │   └── ahantu.service.js
+│   ├── app.js
+│   └── server.js
+│
+├── tests/
+│   └── api.test.js
+│
+├── codevibe-reports/
+│   └── summative-web-infrastructure.report.json
+│
+├── .env.example
+├── .gitignore
+├── package.json
+├── package-lock.json
+└── README.md
+```
+
+The `codevibe-reports/` directory contains the individual CodeVibe assignment reports generated by me. These reports are submitted as part of the infrastructure assignment deliverables.
+
+## 13. Production Access and Repository
+
+**Live application:** https://www.tsungie.tech
+
+**Health endpoint:** https://www.tsungie.tech/api/health
+
+**GitHub repository:** https://github.com/tmachingur-code/kigalipulse
+
+The application dashboard is publicly accessible without an application login.
+
+The application uses Open-Meteo endpoints for weather, air quality and international geocoding. The Ahantu location search requires a server-side API key.
+
+No SSH private keys, server passwords or actual API credentials are included in the repository.
+
+---
+
+**Project:** KigaliPulse – Smart Weather and Air Quality Intelligence Platform
+
+**Deployment architecture:** Two Ubuntu application servers behind an HAProxy load balancer.
