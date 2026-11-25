@@ -404,7 +404,7 @@ function setWeatherTheme(code) {
 
     let theme = "weather-cloudy";
 
-    if ([0.1].includes(code)){
+    if ([0,1].includes(code)){
         theme = "weather-sunny";
     } else if (code >= 95 && code <= 99) {
         theme = "weather-stormy";
