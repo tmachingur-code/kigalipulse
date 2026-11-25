@@ -25,6 +25,7 @@ body {
     background: var(--background);
     color: var(--text);
     line-height: 1.6;
+    min-height: 100vh;
 }
 
 .app-container {
@@ -160,11 +161,6 @@ section {
 
 .weather-card {
     min-height: 150px;
-    background: linear-gradient(
-        135deg,
-        #142c4b,
-        #17213c
-    );
 }
 
 /*==================================
@@ -213,7 +209,7 @@ section {
 }
 
 .aqi-pollutant h2 {
-    font-size: 3opx;
+    font-size: 30px;
     margin-top: 15px;
 }
 
@@ -240,7 +236,7 @@ section {
     transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
-.forecast-day :hover {
+.forecast-day:hover {
     transform: translateY(-5px);
     border-color: var(--primary);
 }
@@ -337,7 +333,7 @@ section {
     align-items: flex-start;
     gap: 14px;
     padding: 18px;
-    background: linear-grdient(145deg, #172554, #1e3a8a);
+    background: linear-gradient(145deg, #172554, #1e3a8a);
     border: 1px solid rgba(125, 211, 252, 0.15);
     border-radius: 14px;
 }
@@ -562,4 +558,97 @@ section {
     }
 }
 
+/*==================================
+// WEATHER RESPONSIVE BACKGROUNDS
+====================================*/
 
+body {
+    min-height: 100vh;
+    transition: background 1.2s ease;
+    position: relative;
+    overflow-x: hidden;
+    isolation: isolate;
+}
+
+/* Keep dashboard content above weather effects */
+.app-container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Animated background layers */
+body::before,
+body::after{
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+
+/* SUNNY WEATHER ATMOSPHERE */
+
+body.weather-sunny {
+    background-color: var(--background);
+    background-image:
+        linear-gradient(
+            rgba(8, 15, 30, 0.70),
+            rgba(8, 15, 30, 0.78)
+        ),
+        url("../images/sunny.png");
+    
+        background-position: center;
+        background-size: cover;
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+}
+
+/* CLOUDY WEATHER ATMOSPHERE */
+
+body.weather-cloudy {
+    background-image:
+        linear-gradient(
+            rgba(8, 15, 30, 0.65),
+            rgba(8, 15, 30, 0.75)
+        ),
+        url("../images/cloudy.png");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    }
+
+/* RAINY WEATHER ATMOSPHERE */
+
+body.weather-rainy {
+    background-image:
+        linear-gradient(
+            rgba(8, 15, 30, 0.65),
+            rgba(8, 15, 30, 0.75)
+        ),
+        url("../images/rainy.png");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/* STORMY ATMOSPHERE */
+
+body.weather-stormy {
+    background-image:
+        linear-gradient(
+            rgba(8,15,30,0.35),
+            rgba(8,15,30,0.65)
+        ),
+        url("/images/stormy-kigali.png");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;     
+}

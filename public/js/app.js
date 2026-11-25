@@ -31,7 +31,6 @@ const chartMetric = document.getElementById("chart-metric");
 const insightsContainer = document.getElementById("insights-container");
 const serverStatus = document.getElementById("server-status");
 
-const connectionStatus = document.getElementById("connection-status");
 const connectionIndicator = document.getElementById("connection-indicator");
 const connectionLabel = document.getElementById("connection-label");
 
@@ -338,17 +337,21 @@ function getWeatherDescription(code) {
         51: "Light drizzle",
         53: "Moderate drizzle",
         55: "Dense drizzle",
+        56: "Light freezing drizzle",
+        57: "Dense freezing drizzle",
         61: "Slight rain",
         63: "Moderate rain",
         65: "Heavy rain",
-        71: "Slight snow",
-        73: "Moderate snow",
-        75: "Heavy snow",
-        80: "Rain showers",
+        71: "Slight snowfall",
+        73: "Moderate snowfall",
+        75: "Heavy snowfall",
+        77: "Snow grains",
+        80: "Slight rain showers",
         81: "Moderate rain showers",
         82: "Violent rain showers",
         95: "Thunderstorm",
-        96: "Thunderstorm with hail",
+        96: "Thunderstorm with slight hail",
+        97: "Heavy thunderstorm",
         99: "Thunderstorm with heavy hail"
     };
 
@@ -366,25 +369,59 @@ function getWeatherIcon(code) {
         51: "🌦️",
         53: "🌦️",
         55: "🌧️",
+        56: "🌧️",
+        57: "🌧️",
         61: "🌧️",
         63: "🌧️",
         65: "🌧️",
+        66: "🌧️",
+        67: "🌧️",
         71: "🌨️",
         73: "❄️",
         75: "❄️",
+        77: "❄️",
         80: "🌦️",
         81: "🌧️",
         82: "⛈️",
+        85: "🌨️",
+        86: "❄️",
         95: "⛈️",
         96: "⛈️",
+        97: "⛈️",
         99: "⛈️"
     };
 
     return icons[code] || "🌤️";
 }
 
+function setWeatherTheme(code) {
+    document.body.classList.remove(
+        "weather-sunny",
+        "weather-cloudy",
+        "weather-rainy",
+        "weather-stormy",
+    );
+
+    let theme = "weather-cloudy";
+
+    if ([0.1].includes(code)){
+        theme = "weather-sunny";
+    } else if (code >= 95 && code <= 99) {
+        theme = "weather-stormy";
+    } else if (
+        (code >= 51 && code <= 67) ||
+        (code >= 80 && code <= 82)
+    ) {
+        theme = "weather-rainy";
+    }
+
+    document.body.classList.add(theme);
+}
+
 function renderCurrentWeather() {
     const current = weatherData.current;
+    
+    setWeatherTheme(current.weather_code);
 
     currentWeather.innerHTML = `
     

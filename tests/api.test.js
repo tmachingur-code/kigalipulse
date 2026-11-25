@@ -337,7 +337,7 @@ test("Ahantu API timeout returns HTTP 504", async (t) => {
         const error = new Error("Request timed out");
         error.name = "TimeoutError";
         throw error;
-    });
+    }); 
 
     const response = await request("/api/locations?q=TimeoutTest");
 
