@@ -426,8 +426,11 @@ section {
 }
 
 /* City search results */
+
 .city-result {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     width: 100%;
     padding: 12px;
     margin-top: 6px;
@@ -441,6 +444,11 @@ section {
 
 .city-result:hover {
     border-color: var(--primary);
+}
+
+.city-result small {
+    color: var(--muted);
+    font-size: 12px;
 }
 
 /* Hourly forecast table */

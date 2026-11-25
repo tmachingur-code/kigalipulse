@@ -181,36 +181,82 @@ async function monitorConnection() {
 // 2. SEARCH FOR A CITY
 // =================================
 
+let activeSearchRequest = 0;
+
 async function searchForCity(city) {
+    const requestId = ++activeSearchRequest;
+
     searchResults.textContent = "Searching...";
 
     try {
-        const data = await fetchAPI(`/api/city?name=${encodeURIComponent(city)}`);
+        let places = [];
 
-        if (!data.results || data.results.length === 0) {
-            searchResults.textContent = "No matching cities found.";
+        // First, search for locations within Kigali
+        try {
+            const localData = await fetchAPI(
+                `/api/locations?q=${encodeURIComponent(city)}`
+            );
+
+            places = localData.results || [];
+        } catch (error) {
+            console.warn("Kigali search unavailable:", error.message);
+        }
+
+        // If no Kigali results are found, search Open-Meteo
+        if (places.length === 0) {
+            const globalData = await fetchAPI(
+                `/api/city?name=${encodeURIComponent(city)}`
+            );
+
+            places = globalData.results || [];
+        }
+
+        // Ignore outdated search responses
+        if (requestId !== activeSearchRequest) return;
+
+        if (places.length === 0) {
+            searchResults.textContent = "No matching locations found.";
             return;
         }
 
         searchResults.innerHTML = "";
-        data.results.forEach((place) => {
-            const button = document.createElement("button");
 
+        places.forEach((place) => {
+            const button = document.createElement("button");
             button.className = "city-result";
 
-            button.textContent = `${place.name}, ${place.admin1 || place.country}`;
+            const title = document.createElement("span");
+            title.textContent = place.name;
 
+            const details = document.createElement("small");
+
+            details.textContent = place.district ? [
+                place.district,
+                place.sector,
+                place.cell,
+                place.village,
+            ].filter(Boolean).join(".")
+            : [place.admin1, place.country]
+                .filter(Boolean).join(",");
+            
+            button.append(title, details);
             button.addEventListener("click", () => {
+                activeSearchRequest++;
+                cityInput.value = place.name;
                 searchResults.innerHTML = "";
                 loadCity(place);
             });
 
             searchResults.appendChild(button);
         });
+
     } catch (error) {
-        searchResults.textContent = error.message;
+        if (requestId === activeSearchRequest) {
+            searchResults.textContent = error.message;
+        }
     }
 }
+
 
 // =====================================
 // 3. LOAD CITY WEATHER AND AIR QUALITY
@@ -221,7 +267,14 @@ async function loadCity(city) {
 
     locationName.textContent = city.name;
 
-    locationDetails.textContent = `${city.country || ""} ${city.timezone || "Local time"}`;
+    locationDetails.textContent = city.district ? [
+        city.district,
+        city.sector,
+        city.cell,
+        city.village,
+        city.country,
+    ].filter(Boolean).join(".")
+    : `${city.country || ""} ${city.timezone || "Local time"}`;
 
     currentWeather.textContent = "Loading weather...";
     airQualityCard.textContent = "Loading air quality...";
@@ -687,8 +740,29 @@ function renderInsights() {
 // 10. EVENT LISTENERS
 // ===================================
 
+let searchDebounceTimer;
+
+cityInput.addEventListener("input", () => {
+    const city = cityInput.value.trim();
+
+    clearTimeout(searchDebounceTimer);
+
+    if (city.length < 2) {
+        activeSearchRequest++;
+        searchResults.innerHTML = "";
+        return;
+    }
+
+    searchDebounceTimer = setTimeout(() => {
+        searchForCity(city);
+    }, 300);
+});
+
+
 searchForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+
+    clearTimeout(searchDebounceTimer);
 
     const city = cityInput.value.trim();
 

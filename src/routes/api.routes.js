@@ -6,7 +6,29 @@ const {
     getAirQuality
 } = require("../services/openMeteo.service");
 
+const {
+    searchKigaliLocations
+} = require("../services/ahantu.service");
+
 const router = express.Router();
+
+// Search for neighborhoods and local places in kigali
+router.get("/locations", async (req, res) => {
+    const { q } = req.query;
+
+    if (!q || typeof q !== "string") {
+        return res.status(400).json({
+            status: "error",
+            message: "Please provide a location to search."
+        });
+    }
+
+    const data = await searchKigaliLocations(q);
+    res.status(200).json({
+        status: "success",
+        data
+    });
+});
 
 // Search for a city
 router.get("/city", async (req, res) => {

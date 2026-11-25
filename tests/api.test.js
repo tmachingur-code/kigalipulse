@@ -250,6 +250,129 @@ test("Repeated city search searches use cached data", async (t) => {
     assert.equal(calls, 1);
 });
 
+test("GET /api/locations without query returns HTTP 400", async () => {
+    const response = await request("/api/locations");
+
+    assert.equal(response.status, 400);
+    assert.equal(response.data.status, "error");
+});
+
+test("GET /api/locations with one character returns HTTP 400", async () => {
+    process.env.AHANTU_API_KEY = "test-key";
+
+    const response = await request("/api/locations?q=k");
+
+    assert.equal(response.status, 400);
+    assert.equal(response.data.status, "error");
+});
+
+test("GET /api/locations returns Kigali locations only", async (t) => {
+    process.env.AHANTU_API_KEY = "test-key";
+
+    t.mock.method(globalThis, "fetch", async (url, options) => {
+        assert.ok(url.includes("api.ahantu.rw"));
+        assert.equal(options.headers.Authorization, "Bearer test-key");
+
+        return {
+            ok: true,
+            json: async () => ({
+                results: [
+                    {
+                        match: "Kimihurura",
+                        type: "neighborhood",
+                        precise: false,
+                        lat: -1.955,
+                        lng: 30.082,
+                        province: { name: "City of Kigali"},
+                        district: { name: "Gasabo"},
+                        sector: { name: "Kimihurura"}
+                    },
+                    {
+                        match: "Kimihurura Office",
+                        type: "local_government_office",
+                        precise: true,
+                        lat: -1.956,
+                        lng: 30.097,
+                        province: { name: "City of Kigali"}
+                    },
+                    {
+                        match: "Another Kimihurura",
+                        lat: -1.5,
+                        lng: 30.5,
+                        province: { name: "Eastern Province"}
+                    }
+                ]
+            })
+        };
+    });
+
+    const response = await request("/api/locations?q=Kimihurura");
+    const results = response.data.data.results;
+
+    assert.equal(response.status, 200);
+    assert.equal(results.length, 2);
+    assert.equal(results[0].name, "Kimihurura");
+    assert.equal(results[0].district, "Gasabo");
+    assert.equal(results[0].latitude, -1.955);
+});
+
+test("Ahantu API failure returns HTTP 502", async (t) => {
+    process.env.AHANTU_API_KEY = "test-key";
+
+    t.mock.method(globalThis, "fetch", async () => ({
+        ok: false,
+        status: 503
+    }));
+
+    const response = await request("/api/locations?q=FailureTest");
+
+    assert.equal(response.status, 502);
+    assert.equal(response.data.status, "error");
+});
+
+test("Ahantu API timeout returns HTTP 504", async (t) => {
+    process.env.AHANTU_API_KEY = "test-key";
+
+    t.mock.method(globalThis, "fetch", async () => {
+        const error = new Error("Request timed out");
+        error.name = "TimeoutError";
+        throw error;
+    });
+
+    const response = await request("/api/locations?q=TimeoutTest");
+
+    assert.equal(response.status, 504);
+    assert.equal(response.data.status, "error");
+});
+
+test("Repeated Ahantu searches use cached data", async (t) => {
+    process.env.AHANTU_API_KEY = "test-key";
+
+    let calls = 0;
+
+    t.mock.method(globalThis, "fetch", async () => {
+        calls++;
+
+        return{
+            ok: true,
+            json: async () => ({
+                results: [{
+                    math: "CacheTestKigali",
+                    type: "neighborhood",
+                    lat: -1.95,
+                    lng: 30.08,
+                    province: { name: "City of Kigali" }
+                }]
+            })
+        };
+    });
+
+    await request("/api/locations?q=CacheTestKigali");
+    await request("/api/locations?q=CacheTestKigali");
+
+    assert.equal(calls, 1);
+});
+
 test("Close test server", async () =>{
     await new Promise((resolve, reject) => {
         server.close((error) => {
