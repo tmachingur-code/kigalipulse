@@ -41,6 +41,7 @@ app.get("/api/connection", async (req, res) => {
             status: "online",
             message: "External API is reachable"
         });
+
     } catch (error) {
         res.status(503).json({
             status: "offline",

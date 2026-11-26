@@ -29,8 +29,10 @@ body {
 }
 
 .app-container {
-    width: min(1200px, 92%);
+    width: 94%;
+    max-width: 1800px;
     margin: 0 auto;
+    box-sizing: border-box;
 }
 
 /*==============================
@@ -81,7 +83,7 @@ body {
 =================================*/
 
 .search-section {
-    padding: 40px 0 25px;
+    padding: 25px 0 20px;
 }
 
 .search-section h2,
@@ -651,4 +653,177 @@ body.weather-stormy {
     background-position: center;
     background-repeat: no-repeat;
     background-attachment: fixed;     
+}
+
+/* ===================================
+    IMPROVED TABLET RESPONSIVENESS
+======================================*/
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .app-container {
+        width: 94%;
+    }
+
+    .app-quality-card {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .aqi-main {
+        grid-column: 1 / -1;
+    }
+
+    .forecast-container {
+        grid-template-columns: repeat(4,minmax(0, 1fr));
+    }
+}
+
+/* =================================
+    IMPROVED MOBILE RESPONSIVENESS
+====================================*/
+
+@media (max-width: 480px) {
+
+    html,
+    body{
+        width: 100%;
+        min-height: 100%;
+        height: auto;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    body {
+        background-attachment: scroll;
+    }
+
+    .app-container{
+        width: 94%;
+        max-width: 100%;
+        height: auto;
+        min-height: 100vh;
+        margin: 0 auto;
+        overflow: visible;
+        box-sizing: border-box;
+    }
+
+    section{
+        width: 100%;
+        margin: 22px 0;
+        box-sizing: border-box;
+    }
+
+    .weather-card,
+    .air-quality-card,
+    .forecast-container,
+    .hourly-container,
+    #insights-container{
+        padding: 14px;
+        box-sizing: border-box;
+        max-width: 100%;
+    }
+
+    .weather-visual{
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .weather-icon{
+        font-size: 48px;
+    }
+
+    .current-weather-content h1{
+        font-size: 42px;
+    }
+
+    .weather-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .weather-details p {
+        font-size: 13px;
+        padding: 10px;
+    }
+
+    .air-quality-card{
+        grid-template-columns: minmax(0, 1fr);
+        width: 100%;
+    }
+
+    .aqi-main{
+        grid-column: auto;
+    }
+
+    .aqi-main,
+    .aqi-pollutant {
+        min-width: 0;
+        padding: 18px;
+        box-sizing: border-box;
+    }
+
+    .aqi-main h2{
+        font-size: 42px;
+    }
+
+    .aqi-pollutant h2 {
+        font-size: 26px;
+    }
+
+    .aqi-main p,
+    .aqi-pollutant p{
+        font-size: 15px;
+    }
+
+    .forecast-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        width: 100%;
+    }
+
+    .forecast-day {
+        min-width: 0;
+        padding: 14px 6px;
+    }
+
+    .forecast-day h3{
+        font-size: 20px;
+    }
+    .forecast-day p{
+        font-size: 14px;
+    }
+
+    .forecast-icon {
+        font-size: 34px;
+    }
+
+    .hourly-container{
+        width: 100%;
+        max-width: 100%;
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .hourly-container table{
+        min-width: 580px;
+    }
+    #insights-container p{
+        font-size: 15px;
+    }
+
+    .search-section{
+        padding-top: 28px;
+    }
+
+    .search-form {
+        width: 100%;
+    }
+
+    .search-form input,
+    .search-form button{
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
 }
