@@ -603,6 +603,8 @@ The `codevibe-reports/` directory contains the individual CodeVibe assignment re
 
 **GitHub repository:** https://github.com/tmachingur-code/kigalipulse
 
+**Demo Video:** https://youtu.be/T60-Qd1rUbg
+
 The application dashboard is publicly accessible without an application login.
 
 The application uses Open-Meteo endpoints for weather, air quality and international geocoding. The Ahantu location search requires a server-side API key.
